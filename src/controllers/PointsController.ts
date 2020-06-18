@@ -15,8 +15,10 @@ class PointsController{
     .whereIn('point_items.item_id', parsedItems)
     .where('city', String(city))
     .where('uf', String(uf))
+    .distinct()
+    .select('points.*')
 
-    return response.json({ok: true})
+    return response.json(points)
   }
 
   async show(request: Request, response: Response) {
@@ -51,9 +53,9 @@ class PointsController{
       } = request.body;
     
       const trx = await knex.transaction();
-    
-      const insertedIds = await trx('points').insert({
-        image: 'image-fake',
+
+      const point = {
+        image: 'https://images.unsplash.com/photo-1481761289552-381112059e05?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60',
         name,
         email,
         whatsapp,
@@ -61,7 +63,9 @@ class PointsController{
         longitude,
         city,
         uf
-      });
+      }
+    
+      const insertedIds = await trx('points').insert(point);
     
       const point_id = insertedIds[0]
     
@@ -76,7 +80,8 @@ class PointsController{
 
       await trx.commit()
     
-      return response.json({success: true})
+      return response.json({id: point_id,
+      ...point,})
     } catch (err) {
       return response.status(400).json({error: "something happened"});
     }
